@@ -6,24 +6,16 @@ Bot tu dong: vao EX Arena (Toram Online) -> danh boss lap combo hoi mana
 + skill damage -> qua man hinh ket qua -> lap lai.
 
 QUAN TRONG - DOC TRUOC KHI CHAY:
-  1) Game chay o do phan giai 960x540 (60fps). Neu cua so game tren may
-     ban KHONG dung dung 960x540 (vd: fullscreen 1920x1080, hoac cua so
-     windowed bi keo gian/thu nho), toa do se bi lech. TAT CA toa do
-     trong CONFIG ben duoi la GIA TRI MAU (placeholder), ban PHAI tu
-     hieu chinh bang calibrate.py (xem huong dan trong file do).
+  1) Game chay o do phan giai 960x540 (60fps). 
   2) Toram dung DirectInput nen click chuot/gui phim kieu "ao" thong
      thuong (pyautogui / SetCursorPos) nhieu khi bi game bo qua. Script
-     nay dung ctypes SendInput (giong engine ban da dung o
-     toram_collab_bot.py) de mo phong input o muc driver, dang tin cay
-     hon.
-  3) Bot uu tien nhan dien UI bang OpenCV template matching (anh mau
-     ban tu chup bang calibrate.py, dat trong thu muc templates/). Neu
-     khong tim thay template (chua chup / ten sai) thi se fallback ve
+     nay dung ctypes SendInput de mo phong input o muc driver
+  3) Bot uu tien nhan dien UI bang OpenCV template matching (dat trong thu muc templates/). 
+     Neu khong tim thay template (chua chup / ten sai) thi se fallback ve
      click theo toa do co dinh + thoi gian cho co dinh (kem canh bao).
   4) Script gia dinh cua so game da o TRANG THAI FOREGROUND (dang active,
      dang duoc focus). Ham force_foreground() se co gang dua cua so len
-     truoc, nhung cach chac chan nhat van la ban tu click vao cua so
-     game truoc khi bam Start / chay script.
+     truoc
 
 Yeu cau cai dat:
     pip install pyautogui opencv-python numpy pillow pywin32
@@ -56,33 +48,33 @@ except ImportError:
 pyautogui.FAILSAFE = True
 
 # =====================================================================
-# CONFIG - CAN HIEU CHINH LAI THEO MAY / DO PHAN GIAI CUA BAN
+# CONFIG - CAN HIEU CHINH LAI THEO MAY / DO PHAN GIAI
 # =====================================================================
 
 WINDOW_TITLE_KEYWORD = "Toram Online"   # chuoi con trong title cua so game
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
-# --- Phim skill (theo mo ta cua ban: 6,7,8 la combo hoi mana; 4 la buff 30s; Q la skill damage chinh). Doi lai neu keybind trong game khac.
-KEY_SKILL_6 = "6"
-KEY_SKILL_7 = "7"
+# --- Phim skill (6,7,8 la combo hoi mana; 4 la buff 30s; Q la skill damage chinh). Doi lai neu keybind trong game khac.
+KEY_SKILL_2 = "2"
 KEY_SKILL_8 = "8"
 KEY_SKILL_4 = "4"
 KEY_SKILL_Q = "q"
 KEY_MOVE_FORWARD = "w"
 KEY_INTERACT = "f"      # phim tuong tac / bam NEXT bang ban phim
+KEY_TAB = "tab"         # mo danh sach muc tieu / NPC gan do
 KEY_ESC = "esc"
 
-DELAY_BETWEEN_COMBO_SKILL = 0.65   # doi giua click skill 6->7->8
+DELAY_SKILL2_TO_8 = 2.0            # doi giua skill 2 va skill 8 (combo hoi mana moi)
 DELAY_AFTER_SKILL4_BUFF = 0.5      # doi ngan sau khi bam skill 4
 DELAY_HOLD_W = 1.4                 # giu W de di chuyen len 1 doan ngan
-WAIT_AFTER_READY = 5.5             # doi man hinh mo man sau khi bam "I'm ready"
+WAIT_AFTER_READY = 7.0             # cho vao cho boss sau khi bam "I'm ready" (user xac nhan 7s)
 WAIT_SKILL_Q_CAST = 3.0            # doi skill Q (damage chinh) thuc hien xong
 WAIT_VICTORY_OK = 6.5              # doi truoc khi bam OK / spam ESC o man ket qua
 TEMPLATE_MATCH_THRESHOLD = 0.80    # do khop toi thieu (0-1) de chap nhan template
 UI_WAIT_TIMEOUT = 12.0             # toi da cho bao lau de 1 UI xuat hien
 
-# Do phan giai GOC cua game: 960x540 @ 60fps.
+# Do phan giai cua game: 960x540 @ 60fps.
 GAME_W, GAME_H = 960, 540
 
 # --- Toa do FALLBACK (dung khi KHONG tim thay template tuong ung).
@@ -94,14 +86,14 @@ GAME_W, GAME_H = 960, 540
 SCREEN_W, SCREEN_H = pyautogui.size()
 
 FALLBACK_POS = {
-    # goc phai man hinh, gan minimap - vi tri NPC hinh cau hong (uoc luong)
-    "npc_pink_orb": (0.90, 0.30),
-    # dong lua chon dau tien trong bang 2 lua chon (EX Arena Entry)
-    "dialog_option_1": (0.50, 0.42),
-    # nut NEXT trang thong tin 2 va 3 (thuong o goc duoi-phai hop thoai)
+    # vi tri dong NPC trong bang danh sach muc tieu (mo bang phim Tab)
+    "npc_list_entry": (0.50, 0.35),
+    # dong lua chon dau tien trong bang 3 lua chon (EX Arena Entry)
+    "dialog_option_1": (0.50, 0.30),
+    # nut NEXT trang Information
     "next_button": (0.82, 0.80),
     # nut "I'm ready" man hinh EVENT BATTLE
-    "ready_button": (0.50, 0.68),
+    "ready_button": (0.72, 0.68),
     # nut OK man hinh chien thang
     "victory_ok_button": (0.50, 0.62),
 }
@@ -115,7 +107,9 @@ def fallback_point(name):
 # =====================================================================
 # LOP INPUT MUC THAP (SendInput) - de tuong thich voi DirectInput
 # =====================================================================
+
 PUL = ctypes.POINTER(ctypes.c_ulong)
+
 
 class KeyBdInput(ctypes.Structure):
     _fields_ = [("wVk", ctypes.c_ushort),
@@ -123,6 +117,7 @@ class KeyBdInput(ctypes.Structure):
                 ("dwFlags", ctypes.c_ulong),
                 ("time", ctypes.c_ulong),
                 ("dwExtraInfo", PUL)]
+
 
 class MouseInput(ctypes.Structure):
     _fields_ = [("dx", ctypes.c_long),
@@ -132,19 +127,23 @@ class MouseInput(ctypes.Structure):
                 ("time", ctypes.c_ulong),
                 ("dwExtraInfo", PUL)]
 
+
 class HardwareInput(ctypes.Structure):
     _fields_ = [("uMsg", ctypes.c_ulong),
                 ("wParamL", ctypes.c_short),
                 ("wParamH", ctypes.c_ushort)]
+
 
 class InputUnion(ctypes.Union):
     _fields_ = [("ki", KeyBdInput),
                 ("mi", MouseInput),
                 ("hi", HardwareInput)]
 
+
 class Input(ctypes.Structure):
     _fields_ = [("type", ctypes.c_ulong),
                 ("ii", InputUnion)]
+
 
 INPUT_KEYBOARD = 1
 INPUT_MOUSE = 0
@@ -160,7 +159,7 @@ SCANCODES = {
     "1": 0x02, "2": 0x03, "3": 0x04, "4": 0x05, "5": 0x06,
     "6": 0x07, "7": 0x08, "8": 0x09, "9": 0x0A, "0": 0x0B,
     "w": 0x11, "a": 0x1E, "s": 0x1F, "d": 0x20, "f": 0x21,
-    "q": 0x10, "e": 0x12, "esc": 0x01,
+    "q": 0x10, "e": 0x12, "esc": 0x01, "tab": 0x0F,
 }
 
 
@@ -186,12 +185,14 @@ def key_press(key, hold=0.05):
     time.sleep(hold)
     _send_key(sc, key_up=True)
 
+
 def key_down(key):
     sc = SCANCODES.get(key.lower())
     if sc is None:
         pyautogui.keyDown(key)
         return
     _send_key(sc, key_up=False)
+
 
 def key_up(key):
     sc = SCANCODES.get(key.lower())
@@ -200,10 +201,12 @@ def key_up(key):
         return
     _send_key(sc, key_up=True)
 
+
 def hold_key_for(key, duration):
     key_down(key)
     time.sleep(duration)
     key_up(key)
+
 
 def _send_mouse_click(x, y):
     """Click chuot trai tai toa do man hinh tuyet doi (x, y), dung SendInput."""
@@ -230,10 +233,21 @@ def _send_mouse_click(x, y):
     up = Input(INPUT_MOUSE, ii_up)
     ctypes.windll.user32.SendInput(1, ctypes.pointer(up), ctypes.sizeof(up))
 
+
 def click_at(x, y, jitter=3):
     """Click co jitter nho de trong tu nhien hon, tranh bi phat hien pattern qua deu."""
     jx = x + random.randint(-jitter, jitter)
     jy = y + random.randint(-jitter, jitter)
+    _send_mouse_click(jx, jy)
+
+
+def double_click_at(x, y, jitter=3, gap=0.12):
+    """Double-click (vd: double-click 1 dong NPC trong danh sach muc tieu
+    de tu dong di chuyen toi NPC do)."""
+    jx = x + random.randint(-jitter, jitter)
+    jy = y + random.randint(-jitter, jitter)
+    _send_mouse_click(jx, jy)
+    time.sleep(gap)
     _send_mouse_click(jx, jy)
 
 
@@ -339,53 +353,51 @@ def click_ui(template_name, fallback_key, timeout=UI_WAIT_TIMEOUT, extra_wait=0.
 
 
 # =====================================================================
-# CAC HANH DONG NGHIEP VU (theo dung 13 buoc ban mo ta)
+# CAC HANH DONG NGHIEP VU (13 buoc)
 # =====================================================================
 
 def mana_combo():
-    """Buoc 1 / 11 / 12(lap): click nhanh skill 6 -> 7 -> 8, doi skill
-    truoc cast xong roi moi bam skill tiep theo (khong spam qua nhanh)."""
-    print("[COMBO] 6 -> 7 -> 8")
-    key_press(KEY_SKILL_6, hold=0.05)
-    time.sleep(DELAY_BETWEEN_COMBO_SKILL)
-    key_press(KEY_SKILL_7, hold=0.05)
-    time.sleep(DELAY_BETWEEN_COMBO_SKILL)
+    """Buoc 1 / 9 / (lap trong combat_loop): bam skill 2, cho 2s de skill
+    cast xong, roi bam skill 8 de hoi mana."""
+    print("[COMBO] Skill 2 -> (cho %.1fs) -> Skill 8" % DELAY_SKILL2_TO_8)
+    key_press(KEY_SKILL_2, hold=0.05)
+    time.sleep(DELAY_SKILL2_TO_8)
     key_press(KEY_SKILL_8, hold=0.05)
-    time.sleep(DELAY_BETWEEN_COMBO_SKILL)
 
 
-def go_to_npc():
-    """Buoc 2: di chuyen den NPC hinh cau hong o goc phai.
-    Toram khong co pathfinding qua phim, cach on dinh nhat la CLICK
-    truc tiep vao NPC tren man hinh (click-to-move), roi doi nhan vat
-    di toi noi."""
-    print("[DI CHUYEN] Toi NPC hinh cau hong...")
-    pos = wait_for_template("npc_pink_orb.png", timeout=UI_WAIT_TIMEOUT)
-    if pos:
-        click_at(*pos)
-    else:
-        print("[CANH BAO] Khong thay template NPC, click theo toa do fallback.")
-        click_at(*fallback_point("npc_pink_orb"))
-    # doi nhan vat di chuyen toi gan NPC (chinh lai thoi gian neu can)
-    time.sleep(2.0)
-
-
-def enter_ex_arena_dialogs():
-    """Buoc 3-6: click title -> chon dong 1 -> NEXT x2."""
-
-    # Buoc 3: title "EX Arena Entry Required: Lv110+" xuat hien khi
-    # dung gan NPC -> click vao title do de mo bang thoai.
-    print("[DIALOG] Cho title 'EX Arena Entry Required' va click...")
-    click_ui("title_ex_arena_required", "npc_pink_orb", timeout=UI_WAIT_TIMEOUT)
+def go_to_npc_via_list():
+    """Buoc 2 (moi): mo danh sach muc tieu bang Tab, double-click dong NPC
+    de nhan vat TU DONG di chuyen toi va tu mo bang 3 lua chon (EX Arena
+    Entry / Prize Exchange / Quit)."""
+    print("[NPC] Mo danh sach muc tieu (phim Tab)...")
+    key_press(KEY_TAB, hold=0.05)
     time.sleep(0.6)
 
-    # Buoc 4: bang 2 lua chon hien ra, chon dong dau tien "EX Arena Entry"
-    print("[DIALOG] Chon dong 'EX Arena Entry' (lua chon 1/2)...")
-    click_ui("dialog_option_1", "dialog_option_1", timeout=UI_WAIT_TIMEOUT)
-    time.sleep(0.8)
+    pos = wait_for_template("npc_list_entry.png", timeout=UI_WAIT_TIMEOUT)
+    if pos:
+        print(f"[NPC] Tim thay dong NPC trong danh sach tai {pos}, double-click...")
+        double_click_at(*pos)
+    else:
+        print("[CANH BAO] Khong tim thay template 'npc_list_entry.png' -> dung "
+              "toa do fallback. Hay chup template nay bang calibrate.py (crop "
+              "dong ten NPC trong bang hien ra sau khi bam Tab).")
+        double_click_at(*fallback_point("npc_list_entry"))
 
-    # Buoc 5: trang thong tin 2 + nut NEXT
-    print("[DIALOG] Trang thong tin 2 -> bam NEXT...")
+    print("[NPC] Doi nhan vat tu dong di chuyen toi NPC va bang lua chon mo ra...")
+    # thoi gian tu-di-chuyen phu thuoc khoang cach, cho lau hon binh thuong
+    wait_for_template("dialog_option_1.png", timeout=UI_WAIT_TIMEOUT * 1.5)
+
+
+def enter_ex_arena():
+    """Buoc 3-4 (moi):
+    - Bang 3 lua chon da mo san (tu go_to_npc_via_list) -> click 'EX Arena Entry'.
+    - Trang Information hien ra kem nut NEXT -> click NEXT (hoac phim F).
+    - Chuyen thang sang trang EVENT BATTLE (xu ly o confirm_ready)."""
+    print("[DIALOG] Chon 'EX Arena Entry' (dong dau trong 3 lua chon)...")
+    click_ui("dialog_option_1", "dialog_option_1", timeout=UI_WAIT_TIMEOUT)
+    time.sleep(0.6)
+
+    print("[DIALOG] Trang Information -> bam NEXT...")
     found = wait_for_template("next_button.png", timeout=UI_WAIT_TIMEOUT)
     if found:
         click_at(found[0], found[1])
@@ -394,27 +406,17 @@ def enter_ex_arena_dialogs():
         print("[CANH BAO] Khong thay template NEXT, da dung phim F thay the.")
     time.sleep(0.8)
 
-    # Buoc 6: trang thong tin 3 + nut NEXT (giong buoc 5)
-    print("[DIALOG] Trang thong tin 3 -> bam NEXT...")
-    found = wait_for_template("next_button.png", timeout=UI_WAIT_TIMEOUT)
-    if found:
-        click_at(found[0], found[1])
-    else:
-        key_press(KEY_INTERACT)
-        print("[CANH BAO] Khong thay template NEXT, da dung phim F thay the.")
-    time.sleep(0.8)
-
 
 def confirm_ready():
-    """Buoc 7-8: man hinh EVENT BATTLE + nut I'm ready -> click -> doi mo man."""
+    """Buoc 5-6 (moi): man hinh EVENT BATTLE + nut I'm ready -> click -> doi 7s vao cho boss."""
     print("[EVENT BATTLE] Cho va click nut 'I'm ready'...")
     click_ui("ready_button", "ready_button", timeout=UI_WAIT_TIMEOUT)
-    print(f"[EVENT BATTLE] Doi {WAIT_AFTER_READY}s de mo man...")
+    print(f"[EVENT BATTLE] Doi {WAIT_AFTER_READY}s de den cho boss...")
     time.sleep(WAIT_AFTER_READY)
 
 
 def move_toward_diamond_and_buff():
-    """Buoc 9-10: giu W tien len gan kim cuong xanh, roi bam skill 4 (buff 30s, 1 lan)."""
+    """Buoc 7-8: giu W tien len gan kim cuong xanh, roi bam skill 4 (buff 30s, 1 lan)."""
     print(f"[DI CHUYEN] Giu W trong {DELAY_HOLD_W}s de tien len gan kim cuong xanh...")
     hold_key_for(KEY_MOVE_FORWARD, DELAY_HOLD_W)
     time.sleep(0.3)
@@ -430,18 +432,17 @@ def is_victory_screen_visible():
 
 def is_still_in_combat():
     """Heuristic: neu KHONG thay man hinh chien thang thi coi nhu van
-    dang trong tran. Ban co the thay bang cach nhan dien thanh HP boss
-    hoac icon boss neu co template rieng."""
+    dang trong tran."""
     return not is_victory_screen_visible()
 
 
 def combat_loop():
     """
-    Buoc 11-12: sau buff -> combo hoi mana -> dung yen bam skill Q (damage
+    Buoc 9-10: sau buff -> combo hoi mana -> dung yen bam skill Q (damage
     chinh) -> doi 3s -> lai combo hoi mana -> lap lai cho toi khi thay
     man hinh ket qua (chien thang) xuat hien.
     """
-    mana_combo()  # buoc 11: ngay sau buff skill 4
+    mana_combo()  # buoc 9: ngay sau buff skill 4
 
     print("[COMBAT] Bat dau vong lap: Q (damage) -> combo hoi mana -> lap lai...")
     while is_still_in_combat():
@@ -459,7 +460,7 @@ def combat_loop():
 
 def handle_end_screen():
     """
-    Buoc 13:
+    Buoc 11:
       - Neu la man hinh "cho boss" (khong phai man chien thang that su):
         spam ESC de bo qua, doi 6-7s.
       - Neu la man hinh chien thang that: bam OK, doi 6-7s.
@@ -490,12 +491,12 @@ def handle_end_screen():
 
 def run_once():
     mana_combo()                 # buoc 1
-    go_to_npc()                  # buoc 2
-    enter_ex_arena_dialogs()     # buoc 3-6
-    confirm_ready()              # buoc 7-8
-    move_toward_diamond_and_buff()  # buoc 9-10
-    combat_loop()                # buoc 11-12
-    handle_end_screen()          # buoc 13
+    go_to_npc_via_list()         # buoc 2 (Tab -> double-click NPC trong list)
+    enter_ex_arena()             # buoc 3-4 (chon EX Arena Entry -> NEXT)
+    confirm_ready()              # buoc 5-6 (I'm ready -> cho 7s vao boss)
+    move_toward_diamond_and_buff()  # buoc 7-8
+    combat_loop()                # buoc 9-10
+    handle_end_screen()          # buoc 11
 
 
 def main():
