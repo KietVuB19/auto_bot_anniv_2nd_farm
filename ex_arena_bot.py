@@ -63,8 +63,7 @@ WINDOW_TITLE_KEYWORD = "Toram Online"   # chuoi con trong title cua so game
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
-# --- Phim skill (theo mo ta cua ban: 6,7,8 la combo hoi mana; 4 la buff
-#     30s; Q la skill damage chinh). Doi lai neu keybind trong game khac.
+# --- Phim skill (theo mo ta cua ban: 6,7,8 la combo hoi mana; 4 la buff 30s; Q la skill damage chinh). Doi lai neu keybind trong game khac.
 KEY_SKILL_6 = "6"
 KEY_SKILL_7 = "7"
 KEY_SKILL_8 = "8"
@@ -74,8 +73,6 @@ KEY_MOVE_FORWARD = "w"
 KEY_INTERACT = "f"      # phim tuong tac / bam NEXT bang ban phim
 KEY_ESC = "esc"
 
-# --- Thoi gian (giay) - DUA TREN QUAN SAT VIDEO ~55s, HAY TINH CHINH LAI
-#     bang cach bam giay hoac xem lai video neu combo bi lech.
 DELAY_BETWEEN_COMBO_SKILL = 0.65   # doi giua click skill 6->7->8
 DELAY_AFTER_SKILL4_BUFF = 0.5      # doi ngan sau khi bam skill 4
 DELAY_HOLD_W = 1.4                 # giu W de di chuyen len 1 doan ngan
@@ -85,9 +82,7 @@ WAIT_VICTORY_OK = 6.5              # doi truoc khi bam OK / spam ESC o man ket q
 TEMPLATE_MATCH_THRESHOLD = 0.80    # do khop toi thieu (0-1) de chap nhan template
 UI_WAIT_TIMEOUT = 12.0             # toi da cho bao lau de 1 UI xuat hien
 
-# Do phan giai GOC cua game (theo xac nhan cua ban): 960x540 @ 60fps.
-# Chi dung de tham chieu/ghi chu - KHONG dung de tinh toan neu cua so
-# game tren may ban dang chay o kich thuoc khac.
+# Do phan giai GOC cua game: 960x540 @ 60fps.
 GAME_W, GAME_H = 960, 540
 
 # --- Toa do FALLBACK (dung khi KHONG tim thay template tuong ung).
@@ -120,9 +115,7 @@ def fallback_point(name):
 # =====================================================================
 # LOP INPUT MUC THAP (SendInput) - de tuong thich voi DirectInput
 # =====================================================================
-
 PUL = ctypes.POINTER(ctypes.c_ulong)
-
 
 class KeyBdInput(ctypes.Structure):
     _fields_ = [("wVk", ctypes.c_ushort),
@@ -130,7 +123,6 @@ class KeyBdInput(ctypes.Structure):
                 ("dwFlags", ctypes.c_ulong),
                 ("time", ctypes.c_ulong),
                 ("dwExtraInfo", PUL)]
-
 
 class MouseInput(ctypes.Structure):
     _fields_ = [("dx", ctypes.c_long),
@@ -140,23 +132,19 @@ class MouseInput(ctypes.Structure):
                 ("time", ctypes.c_ulong),
                 ("dwExtraInfo", PUL)]
 
-
 class HardwareInput(ctypes.Structure):
     _fields_ = [("uMsg", ctypes.c_ulong),
                 ("wParamL", ctypes.c_short),
                 ("wParamH", ctypes.c_ushort)]
-
 
 class InputUnion(ctypes.Union):
     _fields_ = [("ki", KeyBdInput),
                 ("mi", MouseInput),
                 ("hi", HardwareInput)]
 
-
 class Input(ctypes.Structure):
     _fields_ = [("type", ctypes.c_ulong),
                 ("ii", InputUnion)]
-
 
 INPUT_KEYBOARD = 1
 INPUT_MOUSE = 0
@@ -198,14 +186,12 @@ def key_press(key, hold=0.05):
     time.sleep(hold)
     _send_key(sc, key_up=True)
 
-
 def key_down(key):
     sc = SCANCODES.get(key.lower())
     if sc is None:
         pyautogui.keyDown(key)
         return
     _send_key(sc, key_up=False)
-
 
 def key_up(key):
     sc = SCANCODES.get(key.lower())
@@ -214,12 +200,10 @@ def key_up(key):
         return
     _send_key(sc, key_up=True)
 
-
 def hold_key_for(key, duration):
     key_down(key)
     time.sleep(duration)
     key_up(key)
-
 
 def _send_mouse_click(x, y):
     """Click chuot trai tai toa do man hinh tuyet doi (x, y), dung SendInput."""
@@ -245,7 +229,6 @@ def _send_mouse_click(x, y):
     ii_up.mi = MouseInput(0, 0, 0, MOUSEEVENTF_LEFTUP, 0, ctypes.pointer(extra))
     up = Input(INPUT_MOUSE, ii_up)
     ctypes.windll.user32.SendInput(1, ctypes.pointer(up), ctypes.sizeof(up))
-
 
 def click_at(x, y, jitter=3):
     """Click co jitter nho de trong tu nhien hon, tranh bi phat hien pattern qua deu."""
